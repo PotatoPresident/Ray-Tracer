@@ -20,9 +20,9 @@ void writeColor(std::vector<unsigned char>& pixels, uint64_t& index, Color pixel
 
     // Write the translated [0,255] value of each color component
     static const Interval intensity(0.0, 0.999);
-    pixels[++index] = static_cast<unsigned char>(256 * intensity.clamp(g));
-    pixels[++index] = static_cast<unsigned char>(256 * intensity.clamp(b));
-    pixels[++index] = static_cast<unsigned char>(256 * intensity.clamp(r));
+    pixels[index++] = static_cast<unsigned char>(256 * intensity.clamp(r));
+    pixels[index++] = static_cast<unsigned char>(256 * intensity.clamp(g));
+    pixels[index++] = static_cast<unsigned char>(256 * intensity.clamp(b));
 }
 
 #endif //RAYTRACER_COLOR_H
