@@ -13,4 +13,5 @@ add_executable(RayTracer main.cpp
         mathutils.h
         interval.h
         camera.h
+        stb_image_write.h
 )

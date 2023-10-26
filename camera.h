@@ -4,18 +4,24 @@
 #include "hittable.h"
 #include "color.h"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
+const int CHANNEL_NUM = 3;
+
 class Camera {
 public:
     double aspect_ratio = 1.0;
     int image_width = 100;
     int samples_per_pixel = 10;
     int max_depth = 10;
-    std::ofstream outfile;
+    std::string imageName = "image.png";
 
     void render(const Hittable &world) {
         initialize();
 
-        outfile << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+        std::vector<unsigned char> pixels(image_height*image_width*CHANNEL_NUM);
+        uint64_t index = 0;
         for (int j = 0; j < image_height; ++j) {
             std::cout << "\rScanlines remaining: " << image_height - j << ' ' << std::flush;
             for (int i = 0; i < image_width; ++i) {
@@ -25,13 +31,12 @@ public:
                     pixel_color += rayColor(r, max_depth, world);
                 }
 
-                writeColor(outfile, pixel_color, samples_per_pixel);
+                writeColor(pixels, index, pixel_color, samples_per_pixel);
             }
         }
+        stbi_write_png(imageName.c_str(), image_width, image_height, CHANNEL_NUM, pixels.data(), image_width * CHANNEL_NUM);
 
         std::cout << "\rDone.                    \n";
-
-        outfile.close();
     }
 
 private:
@@ -42,8 +47,6 @@ private:
     Vec3 pixel_delta_v;
 
     void initialize() {
-        outfile = std::ofstream("image.ppm");
-
         image_height = static_cast<int>(image_width / aspect_ratio);
         image_height = (image_height < 1) ? 1 : image_height;
 
@@ -92,7 +95,7 @@ private:
         }
 
         if (world.hit(ray, Interval(0.001, infinity), record)) {
-            Vec3 direction = randomOnHemisphere(record.normal);
+            Vec3 direction = record.normal + randomUnitVector();
             return 0.5 * rayColor(Ray(record.point, direction), depth - 1, world);
         }
 
