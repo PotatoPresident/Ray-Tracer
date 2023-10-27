@@ -48,6 +48,11 @@ public:
         return sqrt(lengthSquared());
     }
 
+    bool nearZero() const {
+        auto s = 1e-8;
+        return (fabs(e[0]) < s) && (fabs(e[1]) < s) && (fabs(e[2]) < s);
+    }
+
     static Vec3 random() {
         return {randomDouble(), randomDouble(), randomDouble()};
     }
@@ -123,6 +128,10 @@ inline Vec3 randomOnHemisphere(const Vec3& normal) {
     } else {
         return -onUnitSphere;
     }
+}
+
+Vec3 reflect(const Vec3& v, const Vec3& n) {
+    return v - 2*dot(v, n)*n;
 }
 
 #endif //RAYTRACER_VEC3_H

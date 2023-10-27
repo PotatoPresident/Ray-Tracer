@@ -3,6 +3,7 @@
 
 #include "hittable.h"
 #include "color.h"
+#include "material.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
@@ -95,8 +96,12 @@ private:
         }
 
         if (world.hit(ray, Interval(0.001, infinity), record)) {
-            Vec3 direction = record.normal + randomUnitVector();
-            return 0.5 * rayColor(Ray(record.point, direction), depth - 1, world);
+            Ray scattered;
+            Color attenuation;
+            if (record.material->scatter(ray, record, attenuation, scattered)) {
+                return attenuation * rayColor(scattered, depth-1, world);
+            }
+            return Color(0, 0, 0);
         }
 
         Vec3 unit_direction = unitVector(ray.direction());

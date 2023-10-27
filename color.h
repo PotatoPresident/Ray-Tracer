@@ -7,6 +7,10 @@
 
 using Color = Vec3;
 
+inline double linear_to_gamma(double linear_component) {
+    return sqrt(linear_component);
+}
+
 void writeColor(std::vector<unsigned char>& pixels, uint64_t& index, Color pixel_color, int spp) {
     auto r = pixel_color.x();
     auto g = pixel_color.y();
@@ -17,6 +21,10 @@ void writeColor(std::vector<unsigned char>& pixels, uint64_t& index, Color pixel
     r *= scale;
     g *= scale;
     b *= scale;
+
+    r = linear_to_gamma(r);
+    g = linear_to_gamma(g);
+    b = linear_to_gamma(b);
 
     // Write the translated [0,255] value of each color component
     static const Interval intensity(0.0, 0.999);

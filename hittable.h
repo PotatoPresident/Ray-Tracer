@@ -5,10 +5,13 @@
 #include "ray.h"
 #include "interval.h"
 
+class Material;
+
 class HitRecord {
 public:
     Point3 point;
     Vec3 normal;
+    shared_ptr<Material> material;
     double t;
     bool front_face;
 
