@@ -14,8 +14,12 @@ class Camera {
 public:
     double aspect_ratio = 1.0;
     int image_width = 100;
-    int samples_per_pixel = 10;
-    int max_depth = 10;
+    int samples_per_pixel = 10; // Number of random samples per pixel
+    int max_depth = 10; // Maximum number of ray bounces
+    double vfov = 90; // Degrees
+    Point3 look_from = Point3(0, 0, -1); // Point camera is looking from
+    Point3 look_at = Point3(0, 0, 0); // Point camera is looking at
+    Vec3 vup = Vec3(0, 1, 0); // Camera's relative up vector
     std::string imageName = "image.png";
 
     void render(const Hittable &world) {
@@ -43,31 +47,39 @@ public:
 private:
     int image_height;
     Point3 center;
-    Point3 pixel00_loc;
-    Vec3 pixel_delta_u;
-    Vec3 pixel_delta_v;
+    Point3 pixel00_loc; // Location of the upper left pixel (0, 0)
+    Vec3 pixel_delta_u; // Offset to next horizontal pixel
+    Vec3 pixel_delta_v; // Offset to next vertical pixel
+    Vec3 u, v, w; // Camera basis vectors
 
     void initialize() {
         image_height = static_cast<int>(image_width / aspect_ratio);
         image_height = (image_height < 1) ? 1 : image_height;
 
-        center = Point3(0, 0, 0);
+        center = look_from;
 
         // Viewport dimensions
-        auto focal_length = 1.0;
-        auto viewport_height = 2.0;
+        auto focal_length = (look_from - look_at).length();
+        auto theta = degreesToRadians(vfov);
+        auto h = tan(theta/2);
+        auto viewport_height = 2.0 * h * focal_length;
         auto viewport_width = viewport_height * (static_cast<double>(image_width)/image_height);
 
+        // Calculate the camera basis vectors
+        w = unitVector(look_from - look_at); // Unit vector pointing opposite the view direction
+        u = unitVector(cross(vup, w)); // Unit vector pointing to camera right
+        v = cross(w, u); // Unit vector pointing to camera up
+
         // Calculate the vectors across the horizontal and down the vertical viewport edges
-        auto viewport_u = Vec3(viewport_width, 0, 0);
-        auto viewport_v = Vec3(0, -viewport_height, 0);
+        auto viewport_u = viewport_width * u; // Horizontal viewport vector
+        auto viewport_v = viewport_height * -v; // Vertical viewport vector
 
         // Calculate the horizontal and vertical delta vectors
         pixel_delta_u = viewport_u / image_width;
         pixel_delta_v = viewport_v / image_height;
 
         // Calculate upper left pixel location
-        auto viewport_upper_left = center - Vec3(0, 0, focal_length) - viewport_u / 2 - viewport_v / 2;
+        auto viewport_upper_left = center - (focal_length * w) - viewport_u/2 - viewport_v/2;
         pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
     }
 

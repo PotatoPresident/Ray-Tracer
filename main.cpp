@@ -16,7 +16,8 @@ int main() {
 
     world.add(make_shared<Sphere>(Point3(0.0,-100.5,-1.0), 100, material_ground));
     world.add(make_shared<Sphere>(Point3(0.0,0.0,-1.0), 0.5, material_matte));
-    world.add(make_shared<Sphere>(Point3(-1.0,0.0,-1.0), -0.5, material_glass));
+    world.add(make_shared<Sphere>(Point3(-1.0,0.0,-1.0), 0.5, material_glass));
+    world.add(make_shared<Sphere>(Point3(-1.0,0.0,-1.0), -0.4, material_glass));
     world.add(make_shared<Sphere>(Point3(1.0,0.0,-1.0), 0.5, material_metal));
 
 
@@ -26,6 +27,11 @@ int main() {
     cam.image_width = 400;
     cam.samples_per_pixel = 100;
     cam.max_depth = 50;
+
+    cam.vfov = 20;
+    cam.look_from = Point3(-2, 2, 1);
+    cam.look_at = Point3(0, 0, -1);
+    cam.vup = Vec3(0, 1, 0);
 
     cam.render(world);
 }
