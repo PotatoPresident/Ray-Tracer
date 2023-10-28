@@ -112,16 +112,16 @@ inline Vec3 unitVector(Vec3 v) {
 inline Vec3 randomInUnitDisk() {
     while (true) {
         auto p = Vec3(randomDouble(-1, 1), randomDouble(-1, 1), 0);
-        if (p.lengthSquared() >= 1) continue;
-        return p;
+        if (p.lengthSquared() < 1)
+            return p;
     }
 }
 
 inline Vec3 randomInUnitSphere() {
     while (true) {
         auto p = Vec3::random(-1, 1);
-        if (p.lengthSquared() >= 1) continue;
-        return p;
+        if (p.lengthSquared() < 1)
+            return p;
     }
 }
 

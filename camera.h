@@ -87,7 +87,7 @@ private:
         auto viewport_upper_left = center - (focus_distance * w) - viewport_u/2 - viewport_v/2;
         pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
-        // Caclulate the cam defocus disk basis vectors
+        // Calculate the cam defocus disk basis vectors
         auto defocus_radius = focus_distance * tan(degreesToRadians(defocus_angle / 2));
         defocus_disk_u = defocus_radius * u;
         defocus_disk_v = defocus_radius * v;
