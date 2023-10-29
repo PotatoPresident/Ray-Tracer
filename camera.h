@@ -1,6 +1,11 @@
 #ifndef RAYTRACER_CAMERA_H
 #define RAYTRACER_CAMERA_H
 
+#include <thread>
+#include <atomic>
+#include <mutex>
+#include <iomanip>
+
 #include "hittable.h"
 #include "color.h"
 #include "material.h"
@@ -26,23 +31,47 @@ public:
     double defocus_angle = 0.0; // Variation angle of rays through each pixel (Degrees)
     double focus_distance = 1.0; // Distance from look_from point to focus plane
 
+    unsigned int max_threads = 10;
+
     void render(const Hittable &world) {
         initialize();
 
-        std::vector<unsigned char> pixels(image_height*image_width*CHANNEL_NUM);
-        uint64_t index = 0;
-        for (int j = 0; j < image_height; ++j) {
-            std::cout << "\rScanlines remaining: " << image_height - j << ' ' << std::flush;
-            for (int i = 0; i < image_width; ++i) {
-                Color pixel_color(0, 0, 0);
-                for (int sample = 0; sample < samples_per_pixel; ++sample) {
-                    Ray r = getRay(i, j);
-                    pixel_color += rayColor(r, max_depth, world);
-                }
+        const unsigned int n_threads = std::min(std::thread::hardware_concurrency(), max_threads);
+        std::vector<std::thread> threads(n_threads);
 
-                writeColor(pixels, index, pixel_color, samples_per_pixel);
-            }
+        std::vector<unsigned char> pixels(image_height*image_width*CHANNEL_NUM);
+
+        volatile std::atomic<int> completed(0);
+        std::mutex cout_lock;
+
+        for (int t = 0; t < n_threads; ++t) {
+            threads[t] = std::thread([&](int start, int end, int t) {
+                for (int j = start; j < end; ++j) {
+                    for (int i = 0; i < image_width; ++i) {
+                        Color pixel_color(0, 0, 0);
+                        for (int sample = 0; sample < samples_per_pixel; ++sample) {
+                            Ray r = getRay(i, j);
+                            pixel_color += rayColor(r, max_depth, world);
+                        }
+
+                        writeColor(pixels, 3*(j*image_width+i), pixel_color, samples_per_pixel);
+                    }
+
+                    completed++;
+                    {  //lock variable scope
+                        cout_lock.lock();
+                        std::cout << "\rProgress: [ "<< std::fixed << std::setprecision(2) << (((float)completed / (float)image_height)) * 100.0 << "% ]    " << std::flush;
+                        std::cout.flush();
+                        cout_lock.unlock();
+                    }
+                }
+            }, t*image_height/n_threads, (t + 1)==n_threads ? image_height : (t+1)*image_height/n_threads, t);
         }
+
+        for (int t = 0; t < n_threads; ++t) {
+            threads[t].join();
+        }
+
         stbi_write_png(imageName.c_str(), image_width, image_height, CHANNEL_NUM, pixels.data(), image_width * CHANNEL_NUM);
 
         std::cout << "\rDone.                    \n";
