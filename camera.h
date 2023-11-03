@@ -19,6 +19,7 @@ class Camera {
 public:
     double aspect_ratio = 1.0;
     int image_width = 100;
+    int image_height;
     std::string imageName = "image.png";
     int samples_per_pixel = 10; // Number of random samples per pixel
     int max_depth = 10; // Maximum number of ray bounces
@@ -36,7 +37,7 @@ public:
     void render(const Hittable &world) {
         initialize();
 
-        const unsigned int n_threads = std::min(std::thread::hardware_concurrency(), max_threads);
+        const unsigned int n_threads = max_threads;
         std::vector<std::thread> threads(n_threads);
 
         std::vector<unsigned char> pixels(image_height*image_width*CHANNEL_NUM);
@@ -78,7 +79,6 @@ public:
     }
 
 private:
-    int image_height;
     Point3 center;
     Point3 pixel00_loc; // Location of the upper left pixel (0, 0)
     Vec3 pixel_delta_u; // Offset to next horizontal pixel
@@ -88,8 +88,14 @@ private:
     Vec3 defocus_disk_v; // Defocus disk vertical radius
 
     void initialize() {
-        image_height = static_cast<int>(image_width / aspect_ratio);
+        if (image_height == 0) {
+            image_height = static_cast<int>(image_width / aspect_ratio);
+        }
         image_height = (image_height < 1) ? 1 : image_height;
+
+        if (max_threads < 1) {
+            max_threads = std::thread::hardware_concurrency();
+        }
 
         center = look_from;
 
@@ -158,7 +164,7 @@ private:
         }
 
         Vec3 unit_direction = unitVector(ray.direction());
-        auto a = 0.5*(unit_direction.y() + 1.0);
+        auto a = 0.7*(unit_direction.y() + 1.0);
         return (1.0-a)*Color(1.0, 1.0, 1.0) + a*Color(0.5, 0.7, 1.0);
     }
 
